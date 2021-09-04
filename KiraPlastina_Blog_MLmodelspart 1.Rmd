@@ -1,0 +1,557 @@
+---
+title: "Blog_Churn"
+author: "Snow"
+date: "9/2/2021"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+setwd("C:/Users/Hp/Desktop/R_markdown_projects/KiraPlastina_Blog_MLmodels")
+```
+
+
+# numerical_df DF
+
+## Define the question
+I am a data science for a blogger. The question is making conclusion on who is likely to click on the ads in the blog and derive insights.
+Build a model that can predict if a person will click an ad or not based on the features in the dataframe
+## Metric for success
+
+In order to work on the above problem, you need to do the following:
+
+-   Define the question- the metric for success, the context,experimental design taken and the appropriateness of the available data to answer the given question.
+
+-   Find and deal with outliers, anomalies, and missing data within the dataset.
+
+-   Perform univariate and bivariate analysis.
+
+-   From your insights provide a conclusion and recommendation.
+
+-   Build a model using classification using decision trees and Support Vector Machine 
+
+-   Get an accuracy => 80%
+
+
+## Data Understanding (the context)
+
+A Kenyan entrepreneur has created an online cryptography course and would want to advertise it on her blog. She currently targets audiences originating from various countries. In the past, she ran ads to advertise a related course on the same blog and collected data in the process. She would now like to employ your services as a Data Science Consultant to help her identify which individuals are most likely to click on her ads.
+
+In order to work on the above problem, you need to do the following:
+
+-   Define the question, the metric for success, the context, experimental design taken and the appropriateness of the available data to answer the given question.
+
+-   Find and deal with outliers, anomalies, and missing data within the dataset.
+
+-   Perform univariate and bivariate analysis.
+
+-   From your insights provide a conclusion and recommendation.
+
+-   Build models and get the metrics
+
+    ## Experimental design
+
+1.  Import the data to R
+2.  Perform data exploration
+3.  Define metrics for success
+4.  Perform Uni variate and Bivariate data Analysis
+5.  Provide conclusion
+
+
+
+# Loading the current working directory
+
+```{r}
+ad_df <- read.csv('advertising.csv', header = TRUE, sep = ',')
+```
+
+## Data Exploration
+
+```{r}
+# Standardize column names with standard naming convention ie lowercase and replace spaces with '_'
+
+# replace the spaces with underscores using gsub() function
+names(ad_df) <- gsub(" ","_", names(ad_df))
+
+# lowercase
+names(ad_df) <- tolower(names(ad_df))
+
+# display the column names to confirm the changes
+colnames(ad_df)
+```
+
+```{r}
+# Preview dataset
+head(ad_df)
+```
+
+```{r}
+# Finding the Shape of the dataset
+dim(ad_df)
+```
+
+```{r}
+# Finding the datatypes of the data
+str(ad_df)
+```
+
+## Data cleaning
+```{r}
+# checking for missing Data
+colSums(is.na(ad_df))
+
+```
+There is no missing values in the dataset. 
+```{r}
+# Check for duplicated data in the ad_Df
+ad_df1 <- ad_df[duplicated(ad_df),]
+ad_df1
+
+```
+There are no duplicated records in the dataset
+
+```{r}
+str(ad_df)
+boxplot(ad_df$daily.time.spent.on.site, main = 'Daily Time Spent on-site')
+boxplot(ad_df$age, main = 'age Boxplot')
+boxplot(ad_df$area.income, main = 'Area Income Boxplot')
+boxplot(ad_df$daily.internet.usage, main = 'Daily Internet usage boxplot')
+```
+From the boxplots, only the Area_income column has outliers. 
+```{r}
+#Print out the outliers 
+boxplot(ad_df$area.income, main = 'Area Income Boxplot')$out
+
+```
+There are outliers that do not look like they are in the extreme. There are areas where poverty is prevelant in such areas the total income could be that small.
+
+```{r}
+str (ad_df)
+```
+
+```{r}
+ad_df[['timestamp']] <- as.POSIXct(ad_df[['timestamp']],
+                                   format = "%Y-%m-%d %H:%M:%S")
+str(ad_df)
+```
+The timestamp column is now in the correct dtype
+
+## Univariate Data Analysis
+###Numerical Columns
+```{r}
+summary(ad_df)
+```
+
+
+#### age 
+```{r}
+# Mean 
+mean.age <- mean(ad_df$age)
+mean.age
+```
+
+
+```{r}
+#median 
+median.age <- median (ad_df$age)
+median.age
+```
+
+
+```{r}
+# Function to get the mode. 
+getmode <- function(v) {
+  uniqv <- unique(v)
+  uniqv[which.max(tabulate(match(v, uniqv)))]
+}
+```
+
+
+```{r}
+mode.age <- getmode(ad_df$age)
+mode.age
+```
+
+####Area income 
+```{r}
+mean.areaincome <- mean(ad_df$area.income)
+mean.areaincome
+```
+
+
+```{r}
+median.areaincome <- median(ad_df$area.income)
+median.areaincome
+```
+
+
+```{r}
+mode.areaincome <- getmode(ad_df$area.income)
+mode.areaincome
+```
+
+```{r}
+hist(ad_df$area.income,
+      main="Histogram for Area Income", 
+     xlab="Area income", 
+     border="blue", 
+     col="steelblue",)
+```
+
+#### daily.internet.usage
+
+```{r}
+mean.daily.internet <- mean(ad_df$daily.internet.usage)
+mean.daily.internet
+```
+
+
+```{r}
+median.daily.internet <- median(ad_df$daily.internet.usage)
+median.daily.internet
+```
+
+
+```{r}
+mode.daily.internet <- getmode(ad_df$daily.internet.usage)
+mode.daily.internet
+```
+
+```{r}
+hist(ad_df$daily.internet.usage, 
+     main = 'Daily Intenet Usage',
+      xlab="Daily internet Usage (mins)", 
+     border="blue", 
+     col="steelblue")
+```
+
+#### Daily time spent on site
+
+```{r}
+mean.dtsos <- mean(ad_df$daily.time.spent.on.site)
+mean.dtsos
+```
+
+
+
+```{r}
+median.dtsos <- median(ad_df$daily.time.spent.on.site)
+median.dtsos
+```
+
+
+```{r}
+mode.dtsos <- getmode(ad_df$daily.time.spent.on.site)
+mode.dtsos
+```
+#### clicked.on.ad
+```{r}
+uniq_clickers <- unique(ad_df$clicked.on.ad, )
+length(uniq_clickers)
+```
+There are two categories of the people who clicked on ads 
+Let us plot the frequency of each
+```{r}
+clickers <- ad_df$clicked.on.ad
+clickers_frequency <- table (clickers)
+barplot(clickers_frequency, col = "steelblue")
+
+```
+There are 500 people who clicked on ads and another 500 did not click on the ads. 
+
+### Categorical Columns
+####ad.topic.line
+```{r}
+uniq_topic <- unique(ad_df$ad.topic.line, )
+length(uniq_topic)
+
+```
+There are 1000 unique topic lines meaning it would be impossible to get a good visualization. 
+
+#### city 
+```{r}
+uniq_city <- unique(ad_df$city, )
+length(uniq_city)
+```
+There are 969 unique cities hence it would also be impossible to get a good visualization
+
+#### country 
+```{r}
+uniq_country <- unique(ad_df$country)
+length(uniq_country)
+```
+There are 237 unique countries. 
+
+```{r}
+library(sf)
+library(raster)
+library(dplyr)
+library(spData)
+#library(spDataLarge)
+library(tmap)    # for static and interactive maps
+library(leaflet) # for interactive maps
+library(ggplot2)
+```
+```{r}
+country <- ad_df$country
+countyfreq <- table(country)
+```
+### Gender
+
+```{r}
+male <- ad_df$male
+male_freq <- table(male)
+barplot(male_freq, main= 'Gender Distribution', xlab="Gender",
+ylab="Number of people",
+border="red",
+col="steelblue")
+```
+
+
+ 
+
+
+###Overall Summary
+```{r}
+summary(ad_df)
+```
+
+```{r}
+library(lubridate)
+ad_df$Month_Yr <- format(as.Date(ad_df$timestamp), "%Y-%m")
+head(ad_df)
+```
+
+
+## Bivariate Analysis
+
+```{r}
+ggplot(data = ad_df, mapping = aes(x = area.income)) + 
+  geom_freqpoly(mapping = aes(colour = clicked.on.ad), binwidth = 2000)
+```
+
+
+In areas where the income lies between 60,000 and & 70,000 there is a higher number of people clicking the ads
+#### Correlation
+
+```{r}
+#creating with only interger columns
+numerical_df = ad_df[c("daily.time.spent.on.site", "age", "area.income","daily.internet.usage" ,"male", "clicked.on.ad" )]
+head(numerical_df)
+``` 
+
+
+```{r}
+correlation = cor(numerical_df)
+correlation
+
+```
+
+```{r}
+
+library("PerformanceAnalytics")
+library(corrplot)
+
+```
+
+```{r}
+# Correlation Matrix
+corrplot(correlation, method = 'number')
+
+```
+
+```{r}
+chart.Correlation(numerical_df, histogram = TRUE, pch = 19, ) 
+```
+
+The chart correlations gives a clear summary on the Bi-variate analysis of the dataframe.  
+
+
+
+## Bivariate Conclusion
+
+From the analysis we can get several deductions:
+- daily.time.spent.on.site and the clicked.on.ad have an inverse. 
+- The mean age of the population is 35, and as the age increased more people clicked on ads. 
+- There is an inverse relationship between the daily time spent on site and the number of people who click the ads
+- There were slightly more females in the dataset. 
+- The gender of the users had the least effect on the number of ads clicked and barely affected any other variables.
+'''
+
+
+## Unsupervised learning.
+```{r}
+# preview data structure
+str(numerical_df) 
+head(numerical_df)
+```
+
+```{r}
+#We have to first make sure all the columns are in numerical format
+numerical_df[,1:6] <- sapply(numerical_df[,1:6], as.numeric)
+head(numerical_df)
+
+```
+
+```{r}
+# Normalizing the numerical variables of the data set. Normalizing the numerical values is really effective for algorithms, 
+# as it provides a measure from 0 to 1 which corresponds to min value to the max value of the data column.
+# We define a normal function which will normalize the set of values according to its minimum value and maximum value.
+normalize <- function(x) (
+  return( ((x - min(x)) /(max(x)-min(x))) )
+)
+
+```
+
+```{r}
+# Appliying the normalization function
+numerical_df$area.income<- normalize(numerical_df$area.income)
+numerical_df$daily.internet.usage<- normalize(numerical_df$daily.internet.usage)
+numerical_df$daily.time.spent.on.site<- normalize(numerical_df$daily.time.spent.on.site)
+numerical_df$male<- normalize(numerical_df$male)
+numerical_df$age<- normalize(numerical_df$age)
+head(numerical_df)
+```
+This is a classification problem and for the models we will build two models the Decion trees model and the SVM model
+Lets begin 
+ 
+### Decision Tree
+Importing the important libraries in modelling.
+```{r}
+library(rpart,quietly = TRUE)
+library(caret,quietly = TRUE)
+library(rpart.plot,quietly = TRUE)
+library(rpart.plot)
+library(rattle)
+library(e1071)
+
+
+```
+
+Start with data preparation such as Splitting the data into training and testing set
+
+```{r}
+set.seed(42)
+dttrain <- sample(1:nrow(numerical_df),size = ceiling(0.80*nrow(numerical_df)),replace = FALSE)
+# training set
+dt_train <- numerical_df[dttrain,]
+# test set
+dt_test <- numerical_df[-dttrain,]
+
+```
+we performed an 80-20 split on the data
+
+```{r}
+# we are defining the penalty matrix for the decision tree to ensure that the model has more accurate predictions.
+# The penalty will multiply an error by 10 
+# Penalty matrix
+penalty.matrix <- matrix(c(0, 1, 10,0), byrow = TRUE, nrow = 2)
+```
+
+
+
+```{r}
+dtree <- rpart(clicked.on.ad ~., data = dt_train, parms=list(loss=penalty.matrix), method = 'class')
+dtree
+```
+
+
+```{r}
+rpart.plot(dtree)
+```
+
+```{r}
+# Calculating the metrics of the decison Tree model
+# Predictions Dtree model
+predt <- predict(object = dtree, dt_test[,-6], type = 'class')
+#calculating accuracy
+t <- table(dt_test$clicked.on.ad, predt)
+confusionMatrix(t)
+
+```
+The decision tree model has an accuracy of 89%
+That is quite acceptable as the metrics for success needed an accuracy of 80%
+
+### LinearSVM
+```{r}
+library('caret')
+# Performing an 80 - 20 split
+
+svmtrain <- createDataPartition(y = numerical_df$clicked.on.ad, p= 0.8, list = FALSE)
+training <- numerical_df[svmtrain,]
+
+testing <- numerical_df[-svmtrain,]
+
+```
+
+```{r}
+# Preview the dimensions of the training and testing data
+dim(training)
+dim(testing)
+```
+
+```{r}
+# Building a LinearSVM model
+# SVM model
+
+classifierL = svm(formula = clicked.on.ad ~ .,
+                 data = training,
+                 type = 'C-classification',
+                 kernel = 'linear')
+
+
+```
+
+
+```{r}
+# Running the metrics for the linear classification svm 
+y_predL = predict(classifierL, newdata = testing)
+
+cmL = table(testing$clicked.on.ad, y_predL)
+confusionMatrix(cmL) 
+```
+The Linear SVM model has an accuracy of 98% which is quite an improvement from the Decision tree model. 
+However,  we can still challenge the model, to find a better modle that might account for overfitting. 
+
+
+## Challenging the solution
+
+```{r}
+# Running the clasifier with a 
+classifierRB = svm(formula = clicked.on.ad ~ .,
+                 data = training,
+                 type = 'C-classification',
+                 kernel = 'sigmoid')
+
+```
+
+```{r}
+# Running the metrics for the linear classification svm 
+y_predRB = predict(classifierRB, newdata = testing)
+
+cmRB = table(testing$clicked.on.ad, y_predRB)
+confusionMatrix(cmRB) 
+```
+With a sigmoid kernel on SVM technique the accuracy is (94.5%). This might be a better model because it would account for the overfitting. 
+
+```{r}
+
+```
+
+
+
+
+
+## Conclusion
+ Was the data enough to answer the given questions? 
+The data provided was sufficient in the analysis.
+
+Do you have any recommendation on what data should be added?
+I think that the data was good, however, having more data would not be bad and training a bigger dataframe could lead to more accurate models. 
+
+The data was cleaned and used for analysis in the data frame
+
+
